@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #1e1b4b;
+  --color-muted: #6b7280;
+  --color-surface: #ffffff;
+  --color-canvas: #f5f3ff;
+  --color-line: #e5e7eb;
+
+  --color-brand: #6d28d9;
+  --color-brand-dark: #4c1d95;
+  --color-brand-soft: #ede9fe;
+
+  /* warna tombol jawaban ala game kuis */
+  --color-ans-0: #e21b3c;
+  --color-ans-1: #1368ce;
+  --color-ans-2: #d89e00;
+  --color-ans-3: #26890c;
+  --color-ans-ai: #7c3aed;
+  --color-ans-real: #0d9488;
+
+  --color-good: #16a34a;
+  --color-bad: #dc2626;
+
+  --animate-pop: pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  --animate-shake: shake 0.45s ease-in-out both;
+  --animate-rise: rise 0.4s ease-out both;
+}
+
+@keyframes pop {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+@keyframes rise {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+html, body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+/* latar layar siswa */
+.bg-play {
+  background:
+    radial-gradient(circle at 15% 20%, rgb(255 255 255 / 0.12) 0 120px, transparent 121px),
+    radial-gradient(circle at 85% 75%, rgb(255 255 255 / 0.08) 0 180px, transparent 181px),
+    linear-gradient(160deg, #7c3aed 0%, #5b21b6 55%, #3b0764 100%);
+  color: #fff;
+}
+
+.btn-3d {
+  box-shadow: 0 5px 0 rgb(0 0 0 / 0.25);
+  transition: transform 0.08s, box-shadow 0.08s, filter 0.15s;
+}
+.btn-3d:hover:not(:disabled) { filter: brightness(1.08); }
+.btn-3d:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+@layer components {
+  .input {
+    @apply w-full rounded-xl border-2 border-line bg-white px-3 py-2 font-semibold outline-none focus:border-brand;
+  }
+}
