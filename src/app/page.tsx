@@ -125,7 +125,7 @@ export default function JoinPage() {
       {last && (
         <button
           onClick={() => router.push(`/play/${last.sessionId}`)}
-          className="mt-6 rounded-full bg-white/15 px-5 py-2 font-bold text-white backdrop-blur hover:bg-white/25"
+          className="mt-6 rounded-full bg-white/15 px-5 py-2 font-bold text-white hover:bg-white/25"
         >
           Lanjutkan sebagai {last.name} →
         </button>

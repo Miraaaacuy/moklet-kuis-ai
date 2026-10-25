@@ -118,7 +118,8 @@ export async function getPlayState(playerId: string, token: string, start: boole
       return { ok: true, data: await finishedState(admin, player, summary, "closed") };
     }
 
-    const question = await loadQuestion(admin, player.question_order[player.current_index]);
+    const questionId = player.question_order[player.current_index];
+    const question = ctx.question?.id === questionId ? ctx.question : await loadQuestion(admin, questionId);
     if (!question) {
       player = (await advance(admin, player, { score: 0, correct: false, streak: player.streak })) ?? player;
       continue;
@@ -180,6 +181,8 @@ export interface AnswerFeedback {
   score: number;
   explanation: string;
   isLast: boolean;
+  /** Gambar soal berikutnya (kalau ada) untuk diunduh lebih dulu. */
+  nextImageUrl: string | null;
 }
 
 export async function submitAnswer(
@@ -200,15 +203,19 @@ export async function submitAnswer(
     return { ok: false, error: "Soal ini sudah lewat.", code: "stale" };
   }
 
-  const question = await loadQuestion(admin, questionId);
-  if (!question) return { ok: false, error: "Soal tidak ditemukan.", code: "stale" };
+  const question = ctx.question;
+  if (!question || question.id !== questionId) return { ok: false, error: "Soal tidak ditemukan.", code: "stale" };
 
   if (choiceIndex !== null && (choiceIndex < 0 || choiceIndex >= question.options.length)) {
     return { ok: false, error: "Pilihan tidak valid." };
   }
 
   const elapsed = Date.now() - Date.parse(player.current_started_at);
-  const recorded = await recordAnswer(admin, player, question, choiceIndex, elapsed);
+  // Gambar soal berikutnya dicari bersamaan, supaya HP siswa bisa mengunduhnya selagi membaca penjelasan.
+  const [recorded, nextImageUrl] = await Promise.all([
+    recordAnswer(admin, player, question, choiceIndex, elapsed),
+    loadImageUrl(admin, player.question_order[player.current_index + 1]),
+  ]);
   if (!recorded) return { ok: false, error: "Jawaban sudah tercatat.", code: "stale" };
 
   const { score, isCorrect, player: updated } = recorded;
@@ -226,6 +233,7 @@ export async function submitAnswer(
       score: updated.score,
       explanation: question.explanation,
       isLast: updated.current_index >= updated.question_order.length,
+      nextImageUrl,
     },
   };
 }
@@ -245,14 +253,24 @@ async function loadContext(admin: Admin, playerId: string, token: string) {
     .maybeSingle<Player>();
   if (!player) return null;
 
-  const { data: session } = await admin
-    .from("sessions")
-    .select("id, status, quiz_id, quizzes(title)")
-    .eq("id", player.session_id)
-    .single<{ id: string; status: Session["status"]; quiz_id: string; quizzes: { title: string } | null }>();
+  // Sesi dan soal saat ini diambil bersamaan supaya hemat satu perjalanan ke database.
+  const [{ data: session }, question] = await Promise.all([
+    admin
+      .from("sessions")
+      .select("id, status, quiz_id, quizzes(title)")
+      .eq("id", player.session_id)
+      .single<{ id: string; status: Session["status"]; quiz_id: string; quizzes: { title: string } | null }>(),
+    loadQuestion(admin, player.question_order[player.current_index]),
+  ]);
   if (!session) return null;
 
-  return { player, session, quizTitle: session.quizzes?.title ?? "Quiz" };
+  return { player, session, question, quizTitle: session.quizzes?.title ?? "Quiz" };
+}
+
+async function loadImageUrl(admin: Admin, id: string | undefined) {
+  if (!id) return null;
+  const { data } = await admin.from("questions").select("image_path").eq("id", id).maybeSingle<{ image_path: string | null }>();
+  return imagePublicUrl(data?.image_path ?? null);
 }
 
 async function reloadPlayer(admin: Admin, playerId: string) {

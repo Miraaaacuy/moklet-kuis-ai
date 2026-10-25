@@ -123,7 +123,7 @@ function ReadyScreen({ state, onStart }: { state: Extract<PlayState, { status: "
       <div className="m-auto w-full max-w-md text-center animate-rise">
         <p className="text-lg font-bold text-white/70">Halo,</p>
         <h1 className="text-4xl font-black">{state.name} 👋</h1>
-        <div className="mt-6 rounded-3xl bg-white/10 p-5 backdrop-blur">
+        <div className="mt-6 rounded-3xl bg-white/10 p-5">
           <p className="text-sm font-bold uppercase tracking-wider text-white/60">Quiz</p>
           <p className="mt-1 text-2xl font-extrabold">{state.quizTitle}</p>
           <p className="mt-3 font-semibold text-white/80">
@@ -294,9 +294,14 @@ function FeedbackScreen({
 }) {
   useEffect(() => {
     if (feedback.correct) {
-      void confetti({ particleCount: 120, spread: 80, origin: { y: 0.35 } });
+      void confetti({ particleCount: 80, spread: 80, origin: { y: 0.35 }, disableForReducedMotion: true });
     }
   }, [feedback.correct]);
+
+  // Unduh gambar soal berikutnya selagi siswa membaca penjelasan.
+  useEffect(() => {
+    if (feedback.nextImageUrl) new Image().src = feedback.nextImageUrl;
+  }, [feedback.nextImageUrl]);
 
   const q = question.question;
   const title = feedback.correct ? "Benar! 🎉" : feedback.timedOut ? "Waktu Habis ⏰" : "Kurang Tepat 😅";
@@ -348,8 +353,8 @@ function ResultScreen({ state }: { state: Extract<PlayState, { status: "finished
     if (state.status === "finished" && state.rank <= 3) {
       const end = Date.now() + 1500;
       const frame = () => {
-        void confetti({ particleCount: 6, angle: 60, spread: 60, origin: { x: 0 } });
-        void confetti({ particleCount: 6, angle: 120, spread: 60, origin: { x: 1 } });
+        void confetti({ particleCount: 4, angle: 60, spread: 60, origin: { x: 0 }, disableForReducedMotion: true });
+        void confetti({ particleCount: 4, angle: 120, spread: 60, origin: { x: 1 }, disableForReducedMotion: true });
         if (Date.now() < end) requestAnimationFrame(frame);
       };
       frame();
@@ -404,7 +409,7 @@ function ResultScreen({ state }: { state: Extract<PlayState, { status: "finished
 
 function Stat({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="rounded-2xl bg-white/15 p-3 backdrop-blur">
+    <div className="rounded-2xl bg-white/15 p-3">
       <div className="text-2xl font-black">{value}</div>
       <div className="text-xs font-bold uppercase text-white/70">{label}</div>
       {sub && <div className="text-xs font-semibold text-white/60">{sub}</div>}
